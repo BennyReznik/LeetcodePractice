@@ -1,0 +1,1 @@
+public int[] TwoSum(int[] nums, int t) { var d = new Dictionary<int,int>(); for (int i=0;i<nums.Length;i++) { int c=t-nums[i]; if (d.ContainsKey(c)) return new[]{i,d[c]}; else d.Add(c,i); } return new int[0]; }

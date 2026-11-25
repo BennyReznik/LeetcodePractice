@@ -1,0 +1,16 @@
+{
+  "id": 1, "slug": "two-sum", "title": "Two Sum", "lesson": "1. Arrays, strings and hashing",
+  "description": "Return the indices of two different elements that add up to target. Exactly one solution exists. Either index order is accepted.\n\nnums = [3, 8, 5, 2], target = 10 → [1, 3]",
+  "method": "TwoSum", "compare": "unordered",
+  "starter": "public int[] TwoSum(int[] nums, int target)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [3, 3, 4, 6], target 10: complement and dictionary on each step",
+  "tests": [
+    { "name": "Example", "args": [[3, 8, 5, 2], 10], "expected": [1, 3], "example": true },
+    { "name": "Same number twice", "args": [[3, 3], 6], "expected": [0, 1], "example": true },
+    { "name": "Don't use one element twice", "args": [[5, 1, 9], 10], "expected": [1, 2] },
+    { "name": "Repeated number that isn't used", "args": [[3, 3, 4, 6], 10], "expected": [2, 3] },
+    { "name": "Negative numbers", "args": [[-4, 7, 1, -6], -10], "expected": [0, 3] },
+    { "name": "Zeros", "args": [[0, 4, 0], 0], "expected": [0, 2] }
+  ],
+  "generated": ["two-sum-large"]
+}

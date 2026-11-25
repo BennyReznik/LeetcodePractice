@@ -1,0 +1,1 @@
+public int LongestConsecutive(int[] nums) { var s=new HashSet<int>(nums); int m=0; foreach(int num in nums){ if(s.Contains(num-1)) continue; int c=1; int next=num; bool run=true; while(run){ next++; if(s.Contains(next)) c++; } if(c>m) m=c; } return m; }

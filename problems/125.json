@@ -1,0 +1,18 @@
+{
+  "id": 125, "slug": "valid-palindrome", "title": "Valid Palindrome", "lesson": "2. Two pointers",
+  "description": "Return true if s reads the same forwards and backwards, ignoring case and anything that is not a letter or digit.\n\n\"No lemon, no melon\" → true\n\"ab\" → false\n\" \" → true",
+  "method": "IsPalindrome", "compare": "exact",
+  "starter": "public bool IsPalindrome(string s)\n{\n    \n}\n",
+  "tracePrompt": "Trace of \"a,ba\": left, right and what happens on each step",
+  "tests": [
+    { "name": "Palindrome", "args": ["No lemon, no melon"], "expected": true, "example": true },
+    { "name": "Not a palindrome", "args": ["ab"], "expected": false, "example": true },
+    { "name": "Only a space", "args": [" "], "expected": true, "example": true },
+    { "name": "Punctuation in the middle", "args": ["a,ba"], "expected": true },
+    { "name": "Only punctuation", "args": [".,!?"], "expected": true },
+    { "name": "Digit and letter", "args": ["0P"], "expected": false },
+    { "name": "Punctuation at both ends", "args": ["..a.."], "expected": true },
+    { "name": "Mismatch near the middle", "args": ["abcxba"], "expected": false }
+  ],
+  "generated": ["palindrome-large"]
+}

@@ -1,0 +1,16 @@
+{
+  "id": 49, "slug": "group-anagrams", "title": "Group Anagrams", "lesson": "1. Arrays, strings and hashing",
+  "description": "Group the words that are anagrams of each other. The groups and the words inside them can be in any order. Words use lowercase letters and may be empty.\n\n[\"eat\", \"tea\", \"tan\", \"ate\", \"nat\", \"bat\"] → [[\"eat\", \"tea\", \"ate\"], [\"tan\", \"nat\"], [\"bat\"]]",
+  "method": "GroupAnagrams", "compare": "unordered-groups",
+  "starter": "public IList<IList<string>> GroupAnagrams(string[] strs)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [\"ab\", \"c\", \"ba\"]: key and dictionary after each word",
+  "tests": [
+    { "name": "Example", "args": [["eat", "tea", "tan", "ate", "nat", "bat"]], "expected": [["eat", "tea", "ate"], ["tan", "nat"], ["bat"]], "example": true },
+    { "name": "One empty word", "args": [[""]], "expected": [[""]], "example": true },
+    { "name": "Two empty words", "args": [["", ""]], "expected": [["", ""]] },
+    { "name": "Same word twice", "args": [["ab", "ab", "ba"]], "expected": [["ab", "ab", "ba"]] },
+    { "name": "Same letters, different counts", "args": [["aab", "abb"]], "expected": [["aab"], ["abb"]] },
+    { "name": "Counts need a separator", "args": [["abbbbbbbbbbb", "aaaaaaaaaaab"]], "expected": [["abbbbbbbbbbb"], ["aaaaaaaaaaab"]] }
+  ],
+  "generated": ["group-large"]
+}

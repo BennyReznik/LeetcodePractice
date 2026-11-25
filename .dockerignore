@@ -1,0 +1,5 @@
+.git
+work
+verify
+**/bin
+**/obj

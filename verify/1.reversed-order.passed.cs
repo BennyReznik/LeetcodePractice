@@ -1,0 +1,1 @@
+public class Solution { public int[] TwoSum(int[] nums, int t) { var d = new Dictionary<int,int>(); for (int i=0;i<nums.Length;i++) { if (d.TryGetValue(t-nums[i], out int j)) return new[]{i,j}; d[nums[i]]=i; } return null; } }

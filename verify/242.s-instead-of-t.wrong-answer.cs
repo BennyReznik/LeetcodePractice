@@ -1,0 +1,1 @@
+public bool IsAnagram(string s, string t) { if (s.Length!=t.Length) return false; var c=new int[26]; for(int i=0;i<s.Length;i++) c[s[i]-'a']++; for(int i=0;i<t.Length;i++) c[s[i]-'a']--; return c.All(x=>x==0); }

@@ -1,0 +1,1 @@
+public bool IsPalindrome(string s) { int l=0,r=s.Length-1; while(l<r){ if(!char.IsLetterOrDigit(s[l])) l++; else if(!char.IsLetterOrDigit(s[r])) r--; else { if(char.ToLowerInvariant(s[l])!=char.ToLowerInvariant(s[r])) return false; l++; r--; } } return true; }

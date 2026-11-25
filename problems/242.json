@@ -1,0 +1,16 @@
+{
+  "id": 242, "slug": "valid-anagram", "title": "Valid Anagram", "lesson": "1. Arrays, strings and hashing",
+  "description": "Return true if t uses exactly the same lowercase letters as s, the same number of times.\n\n\"listen\", \"silent\" → true\n\"aab\", \"abb\" → false",
+  "method": "IsAnagram", "compare": "exact",
+  "starter": "public bool IsAnagram(string s, string t)\n{\n    \n}\n",
+  "tracePrompt": "Trace of \"aab\", \"abb\": the counts after each step",
+  "tests": [
+    { "name": "Anagram", "args": ["listen", "silent"], "expected": true, "example": true },
+    { "name": "Same letters, different counts", "args": ["aab", "abb"], "expected": false, "example": true },
+    { "name": "Different lengths", "args": ["ab", "abb"], "expected": false },
+    { "name": "Different letters", "args": ["rat", "car"], "expected": false },
+    { "name": "One letter", "args": ["z", "z"], "expected": true },
+    { "name": "First and last letters of the alphabet", "args": ["azza", "zaza"], "expected": true }
+  ],
+  "generated": ["anagram-large"]
+}

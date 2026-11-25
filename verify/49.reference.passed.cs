@@ -1,0 +1,1 @@
+public IList<IList<string>> GroupAnagrams(string[] strs) { var d=new Dictionary<string,IList<string>>(); foreach(var s in strs){ var a=s.ToCharArray(); Array.Sort(a); var k=new string(a); if(!d.ContainsKey(k)) d[k]=new List<string>(); d[k].Add(s);} return d.Values.ToList(); }

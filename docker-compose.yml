@@ -1,0 +1,51 @@
+services:
+  web:
+    build: .
+    image: leetcode-practice
+    command: web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5190:8080"   # this computer only
+    volumes:
+      - ./work:/work            # your solutions and attempt history
+    networks: [outside, sandbox]
+    depends_on: [runner]
+
+  # Runs your code: no internet, read-only files, limited memory, CPU and processes.
+  runner:
+    image: leetcode-practice
+    build: .
+    command: runner
+    restart: unless-stopped
+    init: true
+    networks: [sandbox]
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 200
+
+  # Checks the tests: docker compose run --rm verify
+  verify:
+    image: leetcode-practice
+    build: .
+    command: verify /verify
+    profiles: [tools]
+    init: true
+    network_mode: none
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 200
+    volumes:
+      - ./verify:/verify:ro
+
+networks:
+  outside:
+  sandbox:
+    internal: true
