@@ -10,29 +10,39 @@
 <body>
   <header>
     <select id="problem" aria-label="Problem"></select>
+    <button id="run" class="run" title="Ctrl+Enter">▶ Run tests</button>
+    <button id="submit" class="primary">Submit</button>
+    <button id="reset">Reset code</button>
     <span id="timer">00:00</span>
     <button id="restart">Restart timer</button>
     <label><input type="checkbox" id="suggest" checked> Suggestions</label>
     <span id="saved" role="status"></span>
   </header>
+  <div id="due" hidden></div>
   <main>
     <section id="left">
       <div id="description"></div>
       <div id="editor" aria-label="Code editor"></div>
     </section>
     <section id="right">
+      <div id="results" aria-live="polite"></div>
       <div class="pair">
         <label>Time complexity<input id="time" placeholder="O(?)"></label>
         <label>Space complexity<input id="space" placeholder="O(?)"></label>
       </div>
-      <label for="trace" id="traceLabel"></label>
-      <textarea id="trace"></textarea>
-      <div class="buttons">
-        <button id="run" title="Ctrl+Enter">Run examples</button>
-        <button id="submit" class="primary">Submit</button>
-        <button id="reset">Reset code</button>
-      </div>
-      <div id="results" aria-live="polite"></div>
+      <div id="traceLabel"></div>
+      <div class="scroll"><table id="rows"></table></div>
+      <div><button id="addRow">Add row</button></div>
+      <details id="ownTests">
+        <summary>Own tests</summary>
+        <p class="note">One input line per parameter. Predict the answer before you run it.</p>
+        <div id="customs"></div>
+        <button id="addCustom">Add test</button>
+      </details>
+      <details>
+        <summary>Notes (optional)</summary>
+        <textarea id="trace" aria-label="Notes"></textarea>
+      </details>
     </section>
   </main>
   <script src="vs/loader.js"></script>

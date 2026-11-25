@@ -1,0 +1,1 @@
+public IList<IList<int>> ThreeSum(int[] a) { Array.Sort(a); var seen=new HashSet<(int,int,int)>(); for(int i=0;i<a.Length;i++) for(int j=i+1;j<a.Length;j++) for(int k=j+1;k<a.Length;k++) if(a[i]+a[j]+a[k]==0) seen.Add((a[i],a[j],a[k])); return seen.Select(t=>(IList<int>)new List<int>{t.Item1,t.Item2,t.Item3}).ToList(); }

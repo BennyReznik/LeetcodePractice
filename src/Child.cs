@@ -35,13 +35,20 @@ public static class Child
                 watch.Start();
                 var value = method.Invoke(instance, values);
                 watch.Stop();
-                result = new(true, JsonSerializer.SerializeToNode(value, method.ReturnType == typeof(void) ? typeof(object) : method.ReturnType),
-                    null, null, 0);
+                // In-place problems are judged by what the method did to an argument.
+                var (answer, answerType) = request.ResultArg is { } index
+                    ? (values[index], parameters[index].ParameterType)
+                    : (value, method.ReturnType == typeof(void) ? typeof(object) : method.ReturnType);
+                result = new(true, JsonSerializer.SerializeToNode(answer, answerType), null, null, 0);
             }
             catch (TargetInvocationException e)
             {
                 var inner = e.InnerException!;
                 result = new(false, null, $"{inner.GetType().Name}: {inner.Message}", null, 0);
+            }
+            catch (JsonException)
+            {
+                result = new(false, null, "The input or result does not match the parameter types.", null, 0);
             }
             catch (Exception e)
             {

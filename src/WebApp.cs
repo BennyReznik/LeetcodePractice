@@ -2,8 +2,10 @@ using System.Text.Json;
 
 namespace Practice;
 
-public record Work(string Code, string Time, string Space, string Trace, int Seconds, int Revision);
-public record RunInput(Work Work, bool Submit);
+public record Work(string Code, string Time, string Space, string Trace, int Seconds, int Revision,
+    List<List<string>>? Rows = null, List<CustomTest>? Custom = null);
+public record RunInput(Work Work, bool Submit, DateOnly Today);
+public record StartReviewInput(int Revision, DateOnly Today);
 
 public static class WebApp
 {
@@ -69,18 +71,51 @@ public static class WebApp
             File.Move(path + ".tmp", path, overwrite: true);
         }
 
-        string StatusOf(Problem p)
-        {
-            var solved = Path.Combine(root, p.Key, "solved.txt");
-            return File.Exists(solved) ? "solved" : File.Exists(Path.Combine(root, p.Key, "Solution.cs")) ? "started" : "new";
-        }
+        string ReviewPath(Problem p) => Path.Combine(root, p.Key, "review.json");
 
-        app.MapGet("/api/problems", () => problems.Values.OrderBy(p => p.Lesson, StringComparer.Ordinal).ThenBy(p => p.Id)
-            .Select(p => new { p.Id, p.Title, p.Lesson, Status = StatusOf(p) }));
+        Review? LoadReview(Problem p) => File.Exists(ReviewPath(p))
+            ? JsonSerializer.Deserialize<Review>(File.ReadAllText(ReviewPath(p)), Problems.Json)
+            : null;
+
+        void SaveReview(Problem p, Review review) => Write(ReviewPath(p), JsonSerializer.Serialize(review, Pretty));
+
+        string StatusOf(Problem p, DateOnly today) => LoadReview(p) switch
+        {
+            { } r when r.Due <= today => "due",
+            not null => "solved",
+            _ => File.Exists(Path.Combine(root, p.Key, "Solution.cs")) ? "started" : "new"
+        };
+
+        app.MapGet("/api/problems", (DateOnly today) => problems.Values.OrderBy(p => p.Lesson, StringComparer.Ordinal).ThenBy(p => p.Id)
+            .Select(p => new { p.Id, p.Title, p.Lesson, Status = StatusOf(p, today), LoadReview(p)?.Due }));
 
         app.MapGet("/api/problems/{id:int}", (int id) => !problems.TryGetValue(id, out var p)
             ? Results.NotFound()
-            : Results.Ok(new { p.Id, p.Title, p.Lesson, p.Description, p.Starter, p.TracePrompt, Work = LoadWork(p) }));
+            : Results.Ok(new { p.Id, p.Title, p.Lesson, p.Description, p.Starter, p.TracePrompt, p.TraceColumns, p.TraceRows,
+                ExampleInput = string.Join("\n", p.Tests[0].Args.Select(a => a?.ToJsonString() ?? "null")),
+                ExampleAnswer = p.Tests[0].Expected?.ToJsonString() ?? "null",
+                Review = LoadReview(p), Work = LoadWork(p) }));
+
+        // Opens a blank editor. The old solution and notes are kept in "attempts".
+        app.MapPost("/api/problems/{id:int}/start-review", (int id, StartReviewInput input) =>
+        {
+            if (!problems.TryGetValue(id, out var p)) return Results.NotFound();
+            lock (saveLock)
+            {
+                if (LoadReview(p) is not { } review || !(review.Due <= input.Today))
+                    return Results.BadRequest(new { error = "This problem is not due for review." });
+                var old = LoadWork(p);
+                if (old.Revision != input.Revision) return Results.Conflict();
+                if (old.Code != p.Starter)
+                {
+                    var attempts = Directory.CreateDirectory(Path.Combine(Dir(p), "attempts")).FullName;
+                    Write(Path.Combine(attempts, $"{DateTime.UtcNow:yyyyMMdd-HHmmssfff}-before-review.json"), JsonSerializer.Serialize(old, Pretty));
+                }
+                SaveWork(p, new Work(p.Starter, "", "", "", 0, old.Revision, null, old.Custom));
+                SaveReview(p, review with { Started = true });
+            }
+            return Results.Ok();
+        });
 
         app.MapPut("/api/problems/{id:int}/work", (int id, Work work) =>
         {
@@ -91,14 +126,19 @@ public static class WebApp
         app.MapPost("/api/problems/{id:int}/run", async (int id, RunInput input, IHttpClientFactory http) =>
         {
             if (!problems.TryGetValue(id, out var p)) return Results.NotFound();
-            if (input.Submit && new[] { input.Work.Time, input.Work.Space, input.Work.Trace }.Any(string.IsNullOrWhiteSpace))
-                return Results.BadRequest(new { error = "Fill in both complexities and your trace before submitting." });
+            if (input.Submit && new[] { input.Work.Time, input.Work.Space }.Any(string.IsNullOrWhiteSpace))
+                return Results.BadRequest(new { error = "Fill in both complexities before submitting." });
+            var fullRows = (input.Work.Rows ?? []).Count(r => r.Count == p.TraceColumns.Count && r.All(c => !string.IsNullOrWhiteSpace(c)));
+            if (input.Submit && fullRows < p.TraceRows)
+                return Results.BadRequest(new { error = $"Fill in at least {p.TraceRows} complete trace rows before submitting. Use - where a value does not apply." });
+            var (custom, customError) = CustomTests.Parse(p, input.Work.Custom);
+            if (customError is not null) return Results.BadRequest(new { error = customError });
             if (SaveWork(p, input.Work) is not { } saved) return Results.Conflict();
 
             JudgeResult result;
             try
             {
-                var response = await http.CreateClient("runner").PostAsJsonAsync("/run", new RunRequest(id, saved.Code, input.Submit), Problems.Json);
+                var response = await http.CreateClient("runner").PostAsJsonAsync("/run", new RunRequest(id, saved.Code, input.Submit, custom), Problems.Json);
                 response.EnsureSuccessStatusCode();
                 result = (await response.Content.ReadFromJsonAsync<JudgeResult>(Problems.Json))!;
             }
@@ -109,15 +149,15 @@ public static class WebApp
 
             var attempt = JsonSerializer.Serialize(new
             {
-                Problem = p.Title, At = DateTime.UtcNow, input.Submit, result.Status, result.Passed, Total = result.Tests.Count,
-                saved.Time, saved.Space, saved.Trace, saved.Seconds, saved.Code, result.Diagnostics, result.Tests
+                Problem = p.Title, At = DateTime.UtcNow, input.Submit, result.Status, result.Passed, result.Total,
+                saved.Time, saved.Space, p.TraceColumns, saved.Rows, Notes = saved.Trace, saved.Seconds, saved.Code, result.Diagnostics, result.Tests
             }, Pretty);
             var attempts = Directory.CreateDirectory(Path.Combine(Dir(p), "attempts")).FullName;
             if (input.Submit) Write(Path.Combine(attempts, $"{DateTime.UtcNow:yyyyMMdd-HHmmssfff}.json"), attempt);
             Write(Path.Combine(root, "latest.json"), attempt);
             if (input.Submit && result.Status == "passed")
-                Write(Path.Combine(Dir(p), "solved.txt"), DateTime.UtcNow.ToString("O"));
-            return Results.Json(new { saved.Revision, Result = result }, Problems.Json);
+                lock (saveLock) SaveReview(p, Reviews.Solved(LoadReview(p), input.Today));
+            return Results.Json(new { saved.Revision, Result = result, Review = LoadReview(p) }, Problems.Json);
         });
 
         app.Run();

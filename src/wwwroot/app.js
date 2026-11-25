@@ -5,6 +5,11 @@ const labels = {
 };
 let editor, problem, revision = 0, seconds = 0, loading = true, dirty = false, saveTimer = 0, queue = Promise.resolve();
 
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 async function api(path, options = {}) {
   let response;
   try {
@@ -21,7 +26,7 @@ async function api(path, options = {}) {
 
 const work = () => ({
   code: editor.getValue(), time: $('time').value, space: $('space').value,
-  trace: $('trace').value, seconds, revision
+  trace: $('trace').value, seconds, revision, rows: readRows(), custom: readCustoms()
 });
 
 // Saves and runs go one at a time, so each uses the latest revision.
@@ -59,9 +64,87 @@ function showTimer() {
   $('timer').textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
+function element(tag, className, text) {
+  const e = document.createElement(tag);
+  e.className = className;
+  e.textContent = text;
+  return e;
+}
+
+// Trace table and own tests
+
+function field(tag, label, value, placeholder = '') {
+  const e = document.createElement(tag);
+  e.value = value;
+  e.placeholder = placeholder;
+  e.setAttribute('aria-label', label);
+  e.addEventListener('input', changed);
+  return e;
+}
+
+function removeButton(label, target) {
+  const b = element('button', 'remove', '×');
+  b.setAttribute('aria-label', label);
+  b.onclick = () => { target.remove(); changed(); };
+  return b;
+}
+
+function addRow(values = []) {
+  const row = document.createElement('tr');
+  problem.traceColumns.forEach((name, i) => {
+    const input = field('input', name, values[i] || '');
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (!row.nextElementSibling) addRow();
+      row.nextElementSibling.querySelector('input').focus();
+    });
+    const cell = document.createElement('td');
+    cell.append(input);
+    row.append(cell);
+  });
+  const last = document.createElement('td');
+  last.append(removeButton('Remove row', row));
+  row.append(last);
+  $('rows').tBodies[0].append(row);
+}
+
+function showRows(rows) {
+  const head = document.createElement('tr');
+  problem.traceColumns.forEach(name => head.append(element('th', '', name)));
+  head.append(element('th', '', ''));
+  const thead = document.createElement('thead');
+  thead.append(head);
+  $('rows').replaceChildren(thead, document.createElement('tbody'));
+  const count = Math.max(rows.length, problem.traceRows);
+  for (let i = 0; i < count; i++) addRow(rows[i]);
+}
+
+const readRows = () => [...$('rows').tBodies[0].rows]
+  .map(r => [...r.querySelectorAll('input')].map(i => i.value))
+  .filter(r => r.some(v => v.trim()));
+
+const fullRows = () => readRows().filter(r => r.every(v => v.trim())).length;
+
+function addCustom(test = { input: '', expected: '' }) {
+  const box = element('div', 'custom', '');
+  box.append(
+    field('textarea', 'Input', test.input, problem.exampleInput),
+    field('textarea', 'Predicted answer', test.expected, problem.exampleAnswer),
+    removeButton('Remove test', box));
+  $('customs').append(box);
+}
+
+const readCustoms = () => [...$('customs').children].map(box => {
+  const [input, expected] = box.querySelectorAll('textarea');
+  return { input: input.value, expected: expected.value };
+}).filter(t => t.input.trim() || t.expected.trim());
+
+// Loading problems and reviews
+
 async function loadList() {
-  const list = await api('');
-  const marks = { solved: '✓ ', started: '• ', new: '' };
+  const list = await api('?today=' + today());
+  const marks = { due: '↻ ', solved: '✓ ', started: '• ', new: '' };
   $('problem').replaceChildren();
   for (const lesson of [...new Set(list.map(p => p.lesson))]) {
     const group = document.createElement('optgroup');
@@ -70,36 +153,67 @@ async function loadList() {
     $('problem').append(group);
   }
   if (problem) $('problem').value = problem.id;
+  const due = list.filter(p => p.status === 'due');
+  $('due').hidden = due.length === 0;
+  $('due').replaceChildren(element('span', '', 'Due for review:'), ...due.map(p => {
+    const b = element('button', '', p.title);
+    b.onclick = () => choose(p.id);
+    return b;
+  }));
   return list;
 }
 
 async function load(id) {
   loading = true;
-  problem = await api('/' + id);
-  revision = problem.work.revision;
-  seconds = problem.work.seconds;
-  $('problem').value = id;
-  $('description').textContent = problem.description;
-  $('traceLabel').textContent = problem.tracePrompt;
-  $('time').value = problem.work.time;
-  $('space').value = problem.work.space;
-  $('trace').value = problem.work.trace;
-  editor.setValue(problem.work.code);
-  monaco.editor.setModelMarkers(editor.getModel(), 'judge', []);
-  $('results').replaceChildren();
-  $('saved').textContent = '';
-  localStorage.setItem('lastProblem', id);
-  showTimer();
-  dirty = false;
-  loading = false;
+  try {
+    let next = await api('/' + id);
+    // A due problem opens blank. The server keeps the old solution in "attempts".
+    if (next.review?.due && next.review.due <= today() && !next.review.started) {
+      await api(`/${id}/start-review`, { method: 'POST', body: JSON.stringify({ revision: next.work.revision, today: today() }) });
+      next = await api('/' + id);
+    }
+    problem = next;
+    revision = problem.work.revision;
+    seconds = problem.work.seconds;
+    $('problem').value = id;
+    $('description').textContent = problem.description;
+    $('traceLabel').textContent = `${problem.tracePrompt} (at least ${problem.traceRows} rows)`;
+    $('time').value = problem.work.time;
+    $('space').value = problem.work.space;
+    $('trace').value = problem.work.trace;
+    showRows(problem.work.rows || []);
+    $('customs').replaceChildren();
+    (problem.work.custom || []).forEach(t => addCustom(t));
+    $('ownTests').open = (problem.work.custom || []).length > 0;
+    editor.setValue(problem.work.code);
+    monaco.editor.setModelMarkers(editor.getModel(), 'judge', []);
+    $('results').replaceChildren(reviewNote());
+    $('saved').textContent = '';
+    localStorage.setItem('lastProblem', id);
+    showTimer();
+    dirty = false;
+  } finally {
+    loading = !problem;
+  }
 }
 
-function element(tag, className, text) {
-  const e = document.createElement(tag);
-  e.className = className;
-  e.textContent = text;
-  return e;
+function reviewNote() {
+  const review = problem.review;
+  if (!review) return element('div', 'skip', '');
+  if (!review.due) return element('div', 'skip', 'Both reviews are done.');
+  if (review.started) return element('div', 'summary skip', 'Review in progress. Your old solution is saved in attempts. Submit a passing solution to finish.');
+  return element('div', 'skip', 'Next review: ' + review.due);
 }
+
+async function choose(id) {
+  try { await save(); await load(id); }
+  catch (e) {
+    if (problem) $('problem').value = problem.id;
+    message(e.message);
+  }
+}
+
+// Running
 
 function message(text, className = 'bad') {
   $('results').replaceChildren(element('div', 'summary ' + className, text));
@@ -122,16 +236,20 @@ function showResult(result, submit) {
     return;
   }
   const good = result.status === 'passed';
-  const count = `${result.passed} of ${result.tests.length} tests passed`;
+  const count = `${result.passed} of ${result.total} tests passed`;
   box.append(element('div', 'summary ' + (good ? 'good' : 'bad'),
-    good ? `${count}.${submit ? ' Solved! Type "review" in the chat.' : ' Submit to run the edge cases.'}` : `${labels[result.status]}. ${count}.`));
+    good ? `${count}.${submit ? ' Solved! Type "review" in the chat.' : ' Submit also runs the edge cases.'}` : `${labels[result.status]}. ${count}.`));
+  if (submit && good) box.append(reviewNote());
+  if (result.tests.some(t => t.custom && t.status === 'wrong-answer'))
+    box.append(element('div', 'summary bad', 'A result differs from your prediction. Find out which one is wrong.'));
   result.tests.forEach(t => {
     const kind = t.status === 'passed' ? 'good' : t.status === 'not-run' ? 'skip' : 'bad';
-    const card = element('div', 'test ' + kind, `${labels[t.status]}: ${t.name}${t.status === 'passed' ? ` (${t.ms} ms)` : ''}`);
+    const label = t.custom && t.status === 'wrong-answer' ? 'Differs from your prediction' : labels[t.status];
+    const card = element('div', 'test ' + kind, `${label}: ${t.name}${t.status === 'passed' ? ` (${t.ms} ms)` : ''}`);
     let details = '';
     if (t.status !== 'passed' && t.status !== 'not-run') {
-      details = `Input:    ${t.input}\nExpected: ${t.expected}`;
-      if (t.actual !== null) details += `\nActual:   ${t.actual}`;
+      details = `Input:     ${t.input}\n${t.custom ? 'Predicted:' : 'Expected: '} ${t.expected}`;
+      if (t.actual !== null) details += `\nActual:    ${t.actual}`;
       if (t.error) details += `\n${t.error}`;
     }
     if (t.output) details += `${details ? '\n' : ''}Output:\n${t.output}`;
@@ -141,18 +259,22 @@ function showResult(result, submit) {
 }
 
 async function run(submit) {
-  if (submit && (!$('time').value.trim() || !$('space').value.trim() || !$('trace').value.trim()))
-    return message('Fill in both complexities and your trace before submitting.');
-  const buttons = [$('run'), $('submit'), $('problem')];
+  if (loading) return;
+  if (submit && (!$('time').value.trim() || !$('space').value.trim()))
+    return message('Fill in both complexities before submitting.');
+  if (submit && fullRows() < problem.traceRows)
+    return message(`Fill in at least ${problem.traceRows} complete trace rows before submitting. Use - where a value does not apply.`);
+  const buttons = [$('run'), $('submit'), $('problem'), $('reset'), ...$('due').querySelectorAll('button')];
   buttons.forEach(b => b.disabled = true);
   message('Running…', 'skip');
   clearTimeout(saveTimer);
   try {
     const response = await enqueue(() => {
       dirty = false;
-      return api(`/${problem.id}/run`, { method: 'POST', body: JSON.stringify({ work: work(), submit }) });
+      return api(`/${problem.id}/run`, { method: 'POST', body: JSON.stringify({ work: work(), submit, today: today() }) });
     });
     if (!dirty) $('saved').textContent = 'Saved';
+    problem.review = response.review;
     showResult(response.result, submit);
     await loadList();
   } catch (e) {
@@ -160,8 +282,11 @@ async function run(submit) {
     message(e.message);
   } finally {
     buttons.forEach(b => b.disabled = false);
+    $('results').scrollIntoView({ block: 'nearest' });
   }
 }
+
+// Editor
 
 const types = 'Array ArgumentException Console Dictionary HashSet IDictionary IEnumerable IList KeyValuePair LinkedList List Math PriorityQueue Queue SortedDictionary SortedSet Stack StringBuilder'.split(' ');
 const keywords = 'bool break char continue double else false for foreach if int long new null public private return static string throw true var void while'.split(' ');
@@ -212,6 +337,8 @@ require(['vs/editor/editor.main'], async () => {
 
   $('run').onclick = () => run(false);
   $('submit').onclick = () => run(true);
+  $('addRow').onclick = () => { addRow(); $('rows').tBodies[0].lastElementChild.querySelector('input').focus(); };
+  $('addCustom').onclick = () => { addCustom(); $('customs').lastElementChild.querySelector('textarea').focus(); };
   $('restart').onclick = () => { seconds = 0; showTimer(); changed(); };
   $('suggest').checked = localStorage.getItem('suggest') !== 'off';
   const applySuggest = () => {
@@ -231,18 +358,18 @@ require(['vs/editor/editor.main'], async () => {
       setTimeout(() => b.textContent = 'Reset code', 3000);
     }
   };
-  $('problem').onchange = async e => {
-    const id = e.target.value;
-    try { await save(); await load(id); }
-    catch (err) { $('problem').value = problem.id; message(err.message); }
-  };
+  $('problem').onchange = e => choose(e.target.value);
   setInterval(() => { if (!loading && !document.hidden) { seconds++; showTimer(); } }, 1000);
+  addEventListener('focus', () => { if (!loading) loadList().catch(() => {}); }); // picks up reviews that became due
   addEventListener('beforeunload', e => { if (dirty) { save().catch(() => {}); e.preventDefault(); } });
 
   try {
     const list = await loadList();
     const last = Number(localStorage.getItem('lastProblem'));
-    await load(list.some(p => p.id === last) ? last : list[0].id);
+    const remembered = list.find(p => p.id === last);
+    // Reviews start only when chosen, not because the problem was the last one open.
+    const first = remembered && remembered.status !== 'due' ? remembered : list.find(p => p.status !== 'due') || list[0];
+    await load(first.id);
   } catch (e) {
     message(e.message);
   }

@@ -1,6 +1,6 @@
 namespace Practice;
 
-public record RunRequest(int ProblemId, string Code, bool Submit);
+public record RunRequest(int ProblemId, string Code, bool Submit, List<TestCase>? Custom);
 
 public static class RunnerApp
 {
@@ -14,7 +14,7 @@ public static class RunnerApp
         {
             if (!problems.TryGetValue(r.ProblemId, out var problem)) return Results.NotFound();
             await gate.WaitAsync();
-            try { return Results.Json(await Judge.RunAsync(problem, r.Code, r.Submit), Problems.Json); }
+            try { return Results.Json(await Judge.RunAsync(problem, r.Code, r.Submit, r.Custom), Problems.Json); }
             finally { gate.Release(); }
         });
         app.Run();

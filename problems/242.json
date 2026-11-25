@@ -4,6 +4,7 @@
   "method": "IsAnagram", "compare": "exact",
   "starter": "public bool IsAnagram(string s, string t)\n{\n    \n}\n",
   "tracePrompt": "Trace of \"aab\", \"abb\": the counts after each step",
+  "traceColumns": ["step", "letter", "counts after"], "traceRows": 6,
   "tests": [
     { "name": "Anagram", "args": ["listen", "silent"], "expected": true, "example": true },
     { "name": "Same letters, different counts", "args": ["aab", "abb"], "expected": false, "example": true },

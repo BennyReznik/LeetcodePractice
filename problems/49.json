@@ -4,6 +4,7 @@
   "method": "GroupAnagrams", "compare": "unordered-groups",
   "starter": "public IList<IList<string>> GroupAnagrams(string[] strs)\n{\n    \n}\n",
   "tracePrompt": "Trace of [\"ab\", \"c\", \"ba\"]: key and dictionary after each word",
+  "traceColumns": ["word", "key", "dictionary after"], "traceRows": 3,
   "tests": [
     { "name": "Example", "args": [["eat", "tea", "tan", "ate", "nat", "bat"]], "expected": [["eat", "tea", "ate"], ["tan", "nat"], ["bat"]], "example": true },
     { "name": "One empty word", "args": [[""]], "expected": [[""]], "example": true },

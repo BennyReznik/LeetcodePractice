@@ -4,6 +4,7 @@
   "method": "IsPalindrome", "compare": "exact",
   "starter": "public bool IsPalindrome(string s)\n{\n    \n}\n",
   "tracePrompt": "Trace of \"a,ba\": left, right and what happens on each step",
+  "traceColumns": ["left", "right", "characters", "action"], "traceRows": 2,
   "tests": [
     { "name": "Palindrome", "args": ["No lemon, no melon"], "expected": true, "example": true },
     { "name": "Not a palindrome", "args": ["ab"], "expected": false, "example": true },

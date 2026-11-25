@@ -8,13 +8,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Practice;
 
 public record Diagnostic(int Line, int Column, string Message);
-public record TestResult(string Name, string Status, string Input, string Expected, string? Actual, string? Error, string? Output, double Ms);
+public record TestResult(string Name, string Status, string Input, string Expected, string? Actual, string? Error, string? Output, double Ms, bool Custom);
 public record JudgeResult(string Status, List<Diagnostic> Diagnostics, List<TestResult> Tests)
 {
-    public int Passed => Tests.Count(t => t.Status == "passed");
+    public int Passed => Tests.Count(t => !t.Custom && t.Status == "passed");
+    public int Total => Tests.Count(t => !t.Custom);
 }
 
-public record ChildRequest(string Assembly, string Method, List<JsonArray> Tests);
+public record ChildRequest(string Assembly, string Method, List<JsonArray> Tests, int? ResultArg);
 public record ChildReply(bool Ok, JsonNode? Result, string? Error, string? Output, double Ms);
 
 public static class Judge
@@ -31,15 +32,15 @@ public static class Judge
         .Select(p => (MetadataReference)MetadataReference.CreateFromFile(p))
         .ToArray();
 
-    public static async Task<JudgeResult> RunAsync(Problem problem, string code, bool submit)
+    public static async Task<JudgeResult> RunAsync(Problem problem, string code, bool submit, List<TestCase>? custom = null)
     {
         var (assembly, diagnostics) = Compile(code);
         if (assembly is null) return new("compile-error", diagnostics, []);
 
-        var tests = Problems.TestsFor(problem, submit);
+        // Own tests go last and never decide whether a solution passes: the prediction may be wrong.
+        var tests = Problems.TestsFor(problem, submit).Concat(custom ?? []).ToList();
         var results = await ExecuteAsync(problem, assembly, tests);
-        var status = results.All(r => r.Status == "passed") ? "passed"
-            : results.First(r => r.Status != "passed").Status;
+        var status = results.FirstOrDefault(r => !r.Custom && r.Status != "passed")?.Status ?? "passed";
         return new(status, [], results);
     }
 
@@ -90,7 +91,7 @@ public static class Judge
         string failureStatus = "runtime-error";
         try
         {
-            var request = new ChildRequest(Convert.ToBase64String(assembly), problem.Method, tests.Select(t => t.Args).ToList());
+            var request = new ChildRequest(Convert.ToBase64String(assembly), problem.Method, tests.Select(t => t.Args).ToList(), problem.ResultArg);
             try
             {
                 await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(request, Problems.Json));
@@ -145,7 +146,7 @@ public static class Judge
 
     static TestResult Result(TestCase t, string status, string? actual, string? error, string? output, double ms) =>
         new(t.Name, status, Short(string.Join(", ", t.Args.Select(Text)), 300), Short(Text(t.Expected), 300),
-            actual is null ? null : Short(actual, 300), error, output, ms);
+            actual is null ? null : Short(actual, 300), error, output, ms, t.Custom);
 
     static readonly JsonSerializerOptions Readable = new() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     static string Text(JsonNode? node) => node?.ToJsonString(Readable) ?? "null";

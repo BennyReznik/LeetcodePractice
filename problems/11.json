@@ -1,0 +1,17 @@
+{
+  "id": 11, "slug": "container-with-most-water", "title": "Container With Most Water", "lesson": "2. Two pointers",
+  "description": "Each number is the height of a vertical line. Choose two lines that hold the most water between them. The amount is the distance between the lines times the shorter height.\n\n[1, 4, 2, 3] → 6",
+  "method": "MaxArea", "compare": "exact",
+  "starter": "public int MaxArea(int[] height)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [1, 4, 2, 3]",
+  "traceColumns": ["left", "right", "area", "best", "which moves"], "traceRows": 3,
+  "tests": [
+    { "name": "Example", "args": [[1, 4, 2, 3]], "expected": 6, "example": true },
+    { "name": "Two lines", "args": [[5, 2]], "expected": 2, "example": true },
+    { "name": "Equal heights", "args": [[4, 4, 4, 4]], "expected": 12 },
+    { "name": "Zero heights", "args": [[0, 0]], "expected": 0 },
+    { "name": "Best pair in the middle", "args": [[1, 2, 50, 50, 2, 1]], "expected": 50 },
+    { "name": "Wide beats tall", "args": [[8, 1, 1, 9, 9, 1, 1, 8]], "expected": 56 }
+  ],
+  "generated": ["container-large"]
+}

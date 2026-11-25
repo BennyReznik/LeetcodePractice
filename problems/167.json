@@ -1,0 +1,16 @@
+{
+  "id": 167, "slug": "two-sum-ii", "title": "Two Sum II (sorted input)", "lesson": "2. Two pointers",
+  "description": "The array is sorted. Return the positions of the two numbers that add up to target, counting from 1, smaller position first. Exactly one solution exists. Use O(1) extra space.\n\nnumbers = [2, 3, 5, 8], target = 8 → [2, 3]",
+  "method": "TwoSum", "compare": "exact",
+  "starter": "public int[] TwoSum(int[] numbers, int target)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [2, 3, 5, 8], target 8",
+  "traceColumns": ["left", "right", "sum", "action"], "traceRows": 3,
+  "tests": [
+    { "name": "Example", "args": [[2, 3, 5, 8], 8], "expected": [2, 3], "example": true },
+    { "name": "Two numbers", "args": [[-1, 0], -1], "expected": [1, 2], "example": true },
+    { "name": "Same number twice", "args": [[1, 4, 4, 9], 8], "expected": [2, 3] },
+    { "name": "First and last", "args": [[1, 3, 4, 20], 21], "expected": [1, 4] },
+    { "name": "Negative numbers", "args": [[-10, -7, -3, 5], -17], "expected": [1, 2] }
+  ],
+  "generated": ["two-sum-sorted-large"]
+}

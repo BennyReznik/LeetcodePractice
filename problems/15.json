@@ -1,0 +1,17 @@
+{
+  "id": 15, "slug": "three-sum", "title": "3Sum", "lesson": "2. Two pointers",
+  "description": "Return every different set of three numbers that adds up to 0. Each position can be used once per set, and no set may appear twice. Any order is accepted.\n\n[-1, 0, 1, -1, 2] → [[-1, -1, 2], [-1, 0, 1]]",
+  "method": "ThreeSum", "compare": "unordered-groups",
+  "starter": "public IList<IList<int>> ThreeSum(int[] nums)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [-1, 0, 1, -1, 2]. After sorting: [-1, -1, 0, 1, 2]",
+  "traceColumns": ["i", "left", "right", "sum", "action"], "traceRows": 4,
+  "tests": [
+    { "name": "Example", "args": [[-1, 0, 1, -1, 2]], "expected": [[-1, -1, 2], [-1, 0, 1]], "example": true },
+    { "name": "No answer", "args": [[1, 2, 3]], "expected": [], "example": true },
+    { "name": "All zeroes", "args": [[0, 0, 0, 0]], "expected": [[0, 0, 0]] },
+    { "name": "Two zeroes aren't enough", "args": [[0, 0, 5]], "expected": [] },
+    { "name": "Repeated left and right values", "args": [[-2, 0, 0, 2, 2]], "expected": [[-2, 0, 2]] },
+    { "name": "Repeated first value", "args": [[-4, -4, 1, 3, 2, 2]], "expected": [[-4, 1, 3], [-4, 2, 2]] }
+  ],
+  "generated": ["three-sum-large", "three-sum-zeroes"]
+}

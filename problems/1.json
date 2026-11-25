@@ -4,6 +4,7 @@
   "method": "TwoSum", "compare": "unordered",
   "starter": "public int[] TwoSum(int[] nums, int target)\n{\n    \n}\n",
   "tracePrompt": "Trace of [3, 3, 4, 6], target 10: complement and dictionary on each step",
+  "traceColumns": ["i", "nums[i]", "complement", "found?", "dictionary after"], "traceRows": 4,
   "tests": [
     { "name": "Example", "args": [[3, 8, 5, 2], 10], "expected": [1, 3], "example": true },
     { "name": "Same number twice", "args": [[3, 3], 6], "expected": [0, 1], "example": true },
