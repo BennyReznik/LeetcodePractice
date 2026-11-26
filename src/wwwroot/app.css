@@ -48,3 +48,12 @@ summary { cursor: pointer; }
   #right { border-left: 0; }
 }
 #results { scroll-margin-top: 110px; }
+#debugTest { max-width: 220px; }
+.debug-line { background: rgba(255, 196, 0, .2); }
+.debug-glyph { background: #e5a50a; border-radius: 50%; margin-left: 5px; width: 9px !important; height: 9px !important; margin-top: 5px; }
+.stepper { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 8px; }
+.stepper input[type=range] { flex: 1; min-width: 120px; padding: 0; }
+.vars { border-collapse: collapse; width: 100%; font: 13px/1.5 Consolas, monospace; margin-bottom: 8px; }
+.vars td { border-bottom: 1px solid #333; padding: 3px 6px; vertical-align: top; overflow-wrap: anywhere; }
+.vars td:first-child { color: #9cdcfe; width: 30%; }
+.vars tr.changed td:last-child { color: #e5c07b; font-weight: 600; }

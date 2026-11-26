@@ -8,15 +8,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Practice;
 
 public record Diagnostic(int Line, int Column, string Message);
-public record TestResult(string Name, string Status, string Input, string Expected, string? Actual, string? Error, string? Output, double Ms, bool Custom);
+public record TestResult(string Name, string Status, string Input, string Expected, string? Actual, string? Error, string? Output, double Ms, bool Custom, List<DebugStep>? Steps = null);
 public record JudgeResult(string Status, List<Diagnostic> Diagnostics, List<TestResult> Tests)
 {
     public int Passed => Tests.Count(t => !t.Custom && t.Status == "passed");
     public int Total => Tests.Count(t => !t.Custom);
 }
 
-public record ChildRequest(string Assembly, string Method, List<JsonArray> Tests, int? ResultArg);
-public record ChildReply(bool Ok, JsonNode? Result, string? Error, string? Output, double Ms);
+public record ChildRequest(string Assembly, string Method, List<JsonArray> Tests, int? ResultArg, bool Debug = false);
+public record ChildReply(bool Ok, JsonNode? Result, string? Error, string? Output, double Ms, List<DebugStep>? Steps = null);
 
 public static class Judge
 {
@@ -44,7 +44,19 @@ public static class Judge
         return new(status, [], results);
     }
 
-    static (byte[]? Assembly, List<Diagnostic> Diagnostics) Compile(string code)
+    /// <summary>Runs one test with every step recorded.</summary>
+    public static async Task<JudgeResult> DebugAsync(Problem problem, string code, TestCase test)
+    {
+        var (assembly, diagnostics) = Compile(code);
+        if (assembly is null) return new("compile-error", diagnostics, []);
+        var (debugAssembly, debugErrors) = Compile(code, debug: true);
+        if (debugAssembly is null)
+            return new("debug-unsupported", [new(1, 1, "This code compiles, but the debugger can't follow it. " + debugErrors.FirstOrDefault()?.Message)], []);
+        var results = await ExecuteAsync(problem, debugAssembly, [test], debug: true);
+        return new(results[0].Status, [], results);
+    }
+
+    static (byte[]? Assembly, List<Diagnostic> Diagnostics) Compile(string code, bool debug = false)
     {
         // Accept either a bare method or a full "class Solution", as on LeetCode.
         bool hasClass = CSharpSyntaxTree.ParseText(code).GetCompilationUnitRoot().Members
@@ -53,8 +65,11 @@ public static class Judge
             ? $"{UsingsAsGlobal()}\n#line 1\n{code}"
             : $"{Usings}public class Solution {{\n#line 1\n{code}\n#line hidden\n}}";
 
-        var compilation = CSharpCompilation.Create("Submission_" + Guid.NewGuid().ToString("N"),
-            [CSharpSyntaxTree.ParseText(source)], References,
+        var tree = CSharpSyntaxTree.ParseText(source);
+        SyntaxTree[] trees = debug
+            ? [Instrumenter.Rewrite(tree, References), CSharpSyntaxTree.ParseText(Instrumenter.Recorder)]
+            : [tree];
+        var compilation = CSharpCompilation.Create("Submission_" + Guid.NewGuid().ToString("N"), trees, References,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Release));
         using var stream = new MemoryStream();
         var emit = compilation.Emit(stream);
@@ -74,7 +89,7 @@ public static class Judge
 
     static string UsingsAsGlobal() => Usings.Replace("using ", "global using ");
 
-    static async Task<List<TestResult>> ExecuteAsync(Problem problem, byte[] assembly, List<TestCase> tests)
+    static async Task<List<TestResult>> ExecuteAsync(Problem problem, byte[] assembly, List<TestCase> tests, bool debug = false)
     {
         var results = new List<TestResult>();
         var info = new ProcessStartInfo(Environment.ProcessPath!)
@@ -91,7 +106,7 @@ public static class Judge
         string failureStatus = "runtime-error";
         try
         {
-            var request = new ChildRequest(Convert.ToBase64String(assembly), problem.Method, tests.Select(t => t.Args).ToList(), problem.ResultArg);
+            var request = new ChildRequest(Convert.ToBase64String(assembly), problem.Method, tests.Select(t => t.Args).ToList(), problem.ResultArg, debug);
             try
             {
                 await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(request, Problems.Json));
@@ -134,7 +149,7 @@ public static class Judge
                 var reply = JsonSerializer.Deserialize<ChildReply>(line!, Problems.Json)!;
                 var status = !reply.Ok ? "runtime-error"
                     : Comparer.Same(problem.Compare, test.Expected, reply.Result) ? "passed" : "wrong-answer";
-                results.Add(Result(test, status, reply.Ok ? Text(reply.Result) : null, reply.Error, reply.Output, reply.Ms));
+                results.Add(Result(test, status, reply.Ok ? Text(reply.Result) : null, reply.Error, reply.Output, reply.Ms) with { Steps = reply.Steps });
             }
         }
         finally

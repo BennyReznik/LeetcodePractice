@@ -185,7 +185,10 @@ async function load(id) {
     $('customs').replaceChildren();
     (problem.work.custom || []).forEach(t => addCustom(t));
     $('ownTests').open = (problem.work.custom || []).length > 0;
+    debugSession = null;
+    debugLine.clear();
     editor.setValue(problem.work.code);
+    fillDebugTests();
     monaco.editor.setModelMarkers(editor.getModel(), 'judge', []);
     $('results').replaceChildren(reviewNote());
     $('saved').textContent = '';
@@ -211,6 +214,107 @@ async function choose(id) {
     if (problem) $('problem').value = problem.id;
     message(e.message);
   }
+}
+
+// Debugger: the server runs one test and records every step; here you move through them.
+
+let debugSession = null, debugLine = null;
+
+function fillDebugTests() {
+  const select = $('debugTest'), previous = select.value;
+  select.replaceChildren(
+    ...problem.examples.map((name, i) => new Option(name.length > 45 ? name.slice(0, 45) + '…' : name, `example-${i}`)),
+    ...readCustoms().map((t, i) => new Option(`Own test ${i + 1}: ${t.input.replace(/\n/g, ', ')}`, `own-${i}`)));
+  if ([...select.options].some(o => o.value === previous)) select.value = previous;
+}
+
+async function debug() {
+  if (loading) return;
+  const buttons = [$('run'), $('submit'), $('debug'), $('problem')];
+  buttons.forEach(b => b.disabled = true);
+  message('Running with the debugger…', 'skip');
+  clearTimeout(saveTimer);
+  try {
+    const test = $('debugTest').value;
+    const response = await enqueue(() => {
+      dirty = false;
+      return api(`/${problem.id}/debug`, { method: 'POST', body: JSON.stringify({ work: work(), test }) });
+    });
+    if (!dirty) $('saved').textContent = 'Saved';
+    const result = response.result;
+    if (result.status === 'compile-error' || result.status === 'debug-unsupported') return showResult(result, false);
+    debugSession = { test: result.tests[0], steps: result.tests[0].steps || [], index: 0 };
+    showStep(0);
+  } catch (e) {
+    dirty = true;
+    message(e.message);
+  } finally {
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+
+function showStep(index) {
+  const { steps, test } = debugSession;
+  const last = steps.length; // one extra position after the last step shows the outcome
+  index = Math.max(0, Math.min(index, last));
+  debugSession.index = index;
+  const box = $('results');
+  box.replaceChildren();
+
+  const button = (text, label, target) => {
+    const b = element('button', '', text);
+    b.setAttribute('aria-label', label);
+    b.onclick = () => showStep(target);
+    b.disabled = target === index || target < 0 || target > last;
+    return b;
+  };
+  const slider = document.createElement('input');
+  Object.assign(slider, { type: 'range', min: 0, max: last, value: index });
+  slider.setAttribute('aria-label', 'Step');
+  slider.oninput = () => showStep(Number(slider.value));
+  const stop = element('button', '', 'Stop');
+  stop.onclick = () => stopDebug('');
+  const bar = element('div', 'stepper', '');
+  bar.append(button('⏮', 'First step', 0), button('◀', 'Previous step', index - 1), button('▶', 'Next step', index + 1),
+    button('⏭', 'Last step', last), slider, stop);
+
+  const where = index < last ? `Step ${index + 1} of ${steps.length}: about to run line ${steps[index].line}` : 'Finished';
+  box.append(element('div', 'summary skip', `Debugging ${test.name}`), element('div', '', where), bar,
+    element('div', 'note', 'Alt+→ and Alt+← also step. Changed values are highlighted.'));
+
+  if (index < last) {
+    const step = steps[index], before = index > 0 ? steps[index - 1].vars : [];
+    const table = element('table', 'vars', '');
+    step.vars.forEach(v => {
+      const row = document.createElement('tr');
+      const old = before.find(b => b.name === v.name);
+      if (index > 0 && (!old || old.value !== v.value)) row.className = 'changed';
+      row.append(element('td', '', v.name), element('td', '', v.value));
+      table.append(row);
+    });
+    if (!step.vars.length) table.append(element('tr', '', 'No variables yet'));
+    box.append(table);
+    debugLine.set([{
+      range: new monaco.Range(step.line, 1, step.line, 1),
+      options: { isWholeLine: true, className: 'debug-line', glyphMarginClassName: 'debug-glyph' }
+    }]);
+    editor.revealLineInCenterIfOutsideViewport(step.line);
+  } else {
+    debugLine.clear();
+    const good = test.status === 'passed';
+    const kind = good ? 'good' : 'bad';
+    let outcome = test.error ? test.error : `Returned ${test.actual}`;
+    if (!test.error) outcome += test.custom ? `, you predicted ${test.expected}` : `, expected ${test.expected}`;
+    box.append(element('div', 'summary ' + kind, outcome));
+    if (test.output) box.append(element('pre', 'test', 'Output:\n' + test.output));
+  }
+}
+
+function stopDebug(note) {
+  if (!debugSession) return;
+  debugSession = null;
+  debugLine.clear();
+  if (note) message(note, 'skip'); else $('results').replaceChildren();
 }
 
 // Running
@@ -260,6 +364,7 @@ function showResult(result, submit) {
 
 async function run(submit) {
   if (loading) return;
+  stopDebug('');
   if (submit && (!$('time').value.trim() || !$('space').value.trim()))
     return message('Fill in both complexities before submitting.');
   if (submit && fullRows() < problem.traceRows)
@@ -311,7 +416,7 @@ require(['vs/editor/editor.main'], async () => {
 
   editor = monaco.editor.create($('editor'), {
     language: 'csharp', theme: 'vs-dark', automaticLayout: true, minimap: { enabled: false },
-    fontSize: 14, tabSize: 4, insertSpaces: true, scrollBeyondLastLine: false, wordBasedSuggestions: 'off',
+    fontSize: 14, tabSize: 4, glyphMargin: true, insertSpaces: true, scrollBeyondLastLine: false, wordBasedSuggestions: 'off',
     autoClosingBrackets: 'always', autoIndent: 'full', fixedOverflowWidgets: true
   });
 
@@ -326,17 +431,26 @@ require(['vs/editor/editor.main'], async () => {
       editor.executeEdits('generic', [{ range: new monaco.Range(p.lineNumber, p.column, p.lineNumber, p.column + 1), text: '' }]);
     }
   });
+  debugLine = editor.createDecorationsCollection();
   editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => run(false));
   editor.onDidChangeModelContent(() => {
     // Bracket closing needs up-to-date tokens; Monaco updates them in the background, too late for fast typing.
     const model = editor.getModel();
     model.tokenization?.forceTokenization?.(model.getLineCount());
+    if (!loading) stopDebug('The code changed, so the recorded steps no longer match. Press Debug again.');
     changed();
   });
   ['time', 'space', 'trace'].forEach(id => $(id).addEventListener('input', changed));
 
   $('run').onclick = () => run(false);
   $('submit').onclick = () => run(true);
+  $('debug').onclick = debug;
+  $('debugTest').onfocus = fillDebugTests;
+  addEventListener('keydown', e => {
+    if (!debugSession || !e.altKey || !['ArrowRight', 'ArrowLeft'].includes(e.key)) return;
+    e.preventDefault();
+    showStep(debugSession.index + (e.key === 'ArrowRight' ? 1 : -1));
+  });
   $('addRow').onclick = () => { addRow(); $('rows').tBodies[0].lastElementChild.querySelector('input').focus(); };
   $('addCustom').onclick = () => { addCustom(); $('customs').lastElementChild.querySelector('textarea').focus(); };
   $('restart').onclick = () => { seconds = 0; showTimer(); changed(); };

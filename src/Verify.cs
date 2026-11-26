@@ -60,8 +60,18 @@ public static class Verify
         var reference = "public int LongestConsecutive(int[] n) { return n.Distinct().Count(x => !n.Contains(x)) + Run(n); } " +
                         "int Run(int[] n) { int m = 0; foreach (int x in n) { int l = 1; while (n.Contains(x + l)) l++; m = Math.Max(m, l); } return m; }";
         var judged = await Judge.RunAsync(problems[128], reference, submit: false, wrongGuess);
+        var palindrome = "public bool IsPalindrome(string s)\n{\n    int left = 0, right = s.Length - 1;\n    while (left < right)\n    {\n        if (!char.IsLetterOrDigit(s[left])) left++;\n        else if (!char.IsLetterOrDigit(s[right])) right--;\n        else if (char.ToLower(s[left++]) != char.ToLower(s[right--])) return false;\n    }\n    return true;\n}\n";
+        var traced = await Judge.DebugAsync(problems[125], palindrome, problems[125].Tests.First(t => t.Args[0]!.GetValue<string>() == "a,ba"));
+        var steps = traced.Tests.FirstOrDefault()?.Steps ?? [];
+        var forever = await Judge.DebugAsync(problems[125], "public bool IsPalindrome(string s) { int n = 0; while (true) n++; }", problems[125].Tests[0]);
+        var fancy = await Judge.DebugAsync(problems[125], "public bool IsPalindrome(string s) { Span<char> a = stackalloc char[2]; foreach (var c in s) switch (c) { case ' ': continue; default: a[0] = c; break; } return Local(s); static bool Local(string x) { var t = x.Length; return t >= 0; } }", problems[125].Tests[0]);
         return
         [
+            ("debugger records lines and changing values", traced.Status == "passed" && steps.Count >= 6 &&
+                steps[0].Line == 3 && steps.Any(s => s.Line == 6) && steps.Any(s => s.Vars.Any(v => v.Name == "left" && v.Value == "1"))),
+            ("debugger keeps line numbers for statements without braces", steps.Any(s => s.Line == 8)),
+            ("debugger stops an endless loop", forever.Tests.FirstOrDefault()?.Error?.Contains("Stopped after") == true),
+            ("debugger handles switch, Span and local functions", fancy.Status == "passed" && fancy.Tests[0].Steps!.Count > 0),
             ("first solve is due in 3 days", first.Due == day.AddDays(3)),
             ("solving again without starting a review changes nothing", Reviews.Solved(first, day.AddDays(3)) == first),
             ("first review leads to day 7", second.Due == day.AddDays(7) && !second.Started),

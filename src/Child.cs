@@ -16,6 +16,18 @@ public static class Child
         var type = Assembly.Load(Convert.FromBase64String(request.Assembly)).GetType("Solution");
         var method = type?.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
             .FirstOrDefault(m => m.Name == request.Method);
+        var steps = new List<DebugStep>();
+        if (request.Debug)
+        {
+            Action<int, object?[]> record = (line, pairs) =>
+            {
+                if (steps.Count >= Instrumenter.MaxSteps) throw new StepLimitException();
+                var vars = new List<DebugVar>();
+                for (int i = 0; i + 1 < pairs.Length; i += 2) vars.Add(new((string)pairs[i]!, Snapshot.Describe(pairs[i + 1])));
+                steps.Add(new(line, vars));
+            };
+            type?.Assembly.GetType("__Dbg")?.GetField("OnStep")?.SetValue(null, record);
+        }
         reply.WriteLine("ready");
 
         foreach (var args in request.Tests)
@@ -41,6 +53,11 @@ public static class Child
                     : (value, method.ReturnType == typeof(void) ? typeof(object) : method.ReturnType);
                 result = new(true, JsonSerializer.SerializeToNode(answer, answerType), null, null, 0);
             }
+            catch (TargetInvocationException e) when (e.InnerException is StepLimitException)
+            {
+                watch.Stop();
+                result = new(false, null, e.InnerException.Message, null, 0);
+            }
             catch (TargetInvocationException e)
             {
                 var inner = e.InnerException!;
@@ -55,7 +72,7 @@ public static class Child
                 result = new(false, null, $"{e.GetType().Name}: {e.Message}", null, 0);
             }
             var text = output.ToString();
-            result = result with { Output = text.Length > 2000 ? text[..2000] + "…" : text, Ms = Math.Round(watch.Elapsed.TotalMilliseconds, 2) };
+            result = result with { Output = text.Length > 2000 ? text[..2000] + "…" : text, Ms = Math.Round(watch.Elapsed.TotalMilliseconds, 2), Steps = request.Debug ? steps : null };
             reply.WriteLine(JsonSerializer.Serialize(result, Problems.Json));
         }
         return 0;

@@ -6,6 +6,7 @@ public record Work(string Code, string Time, string Space, string Trace, int Sec
     List<List<string>>? Rows = null, List<CustomTest>? Custom = null);
 public record RunInput(Work Work, bool Submit, DateOnly Today);
 public record StartReviewInput(int Revision, DateOnly Today);
+public record DebugInput(Work Work, string Test);
 
 public static class WebApp
 {
@@ -94,6 +95,7 @@ public static class WebApp
             : Results.Ok(new { p.Id, p.Title, p.Lesson, p.Description, p.Starter, p.TracePrompt, p.TraceColumns, p.TraceRows,
                 ExampleInput = string.Join("\n", p.Tests[0].Args.Select(a => a?.ToJsonString() ?? "null")),
                 ExampleAnswer = p.Tests[0].Expected?.ToJsonString() ?? "null",
+                Examples = p.Tests.Where(t => t.Example).Select(t => $"{t.Name}: {string.Join(", ", t.Args.Select(a => a?.ToJsonString()))}"),
                 Review = LoadReview(p), Work = LoadWork(p) }));
 
         // Opens a blank editor. The old solution and notes are kept in "attempts".
@@ -158,6 +160,31 @@ public static class WebApp
             if (input.Submit && result.Status == "passed")
                 lock (saveLock) SaveReview(p, Reviews.Solved(LoadReview(p), input.Today));
             return Results.Json(new { saved.Revision, Result = result, Review = LoadReview(p) }, Problems.Json);
+        });
+
+        // Test ids: "example-0" for the first example, "own-0" for the first own test.
+        app.MapPost("/api/problems/{id:int}/debug", async (int id, DebugInput input, IHttpClientFactory http) =>
+        {
+            if (!problems.TryGetValue(id, out var p)) return Results.NotFound();
+            var (custom, customError) = CustomTests.Parse(p, input.Work.Custom);
+            var parts = input.Test.Split('-');
+            var list = parts[0] == "own" ? custom : p.Tests.Where(t => t.Example).ToList();
+            if (parts.Length != 2 || !int.TryParse(parts[1], out int index) || index < 0 || index >= list.Count)
+                return Results.BadRequest(new { error = customError ?? "Choose a test to debug." });
+            if (SaveWork(p, input.Work) is not { } saved) return Results.Conflict();
+
+            try
+            {
+                var response = await http.CreateClient("runner").PostAsJsonAsync("/run",
+                    new RunRequest(id, saved.Code, false, null, list[index]), Problems.Json);
+                response.EnsureSuccessStatusCode();
+                var result = (await response.Content.ReadFromJsonAsync<JudgeResult>(Problems.Json))!;
+                return Results.Json(new { saved.Revision, Result = result }, Problems.Json);
+            }
+            catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+            {
+                return Results.Json(new { error = "The code runner isn't available. Try: docker compose restart runner", saved.Revision }, statusCode: 503);
+            }
         });
 
         app.Run();
