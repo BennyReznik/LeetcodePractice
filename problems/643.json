@@ -1,5 +1,5 @@
 {
-  "id": 643, "slug": "maximum-average-subarray", "title": "Maximum Average Subarray I", "lesson": "3. Sliding window",
+  "id": 643, "slug": "maximum-average-subarray", "title": "Maximum Average Subarray I", "lesson": "3. Sliding window", "order": 1,
   "description": "Find the k numbers in a row with the largest average, and return that average. Answers within 0.00001 are accepted.\n\nnums = [1, 12, -5, -6, 50, 3], k = 4 → 12.75 (12 - 5 - 6 + 50 = 51, and 51 / 4 = 12.75)",
   "method": "FindMaxAverage", "compare": "close",
   "starter": "public double FindMaxAverage(int[] nums, int k)\n{\n    \n}\n",

@@ -87,7 +87,7 @@ public static class WebApp
             _ => File.Exists(Path.Combine(root, p.Key, "Solution.cs")) ? "started" : "new"
         };
 
-        app.MapGet("/api/problems", (DateOnly today) => problems.Values.OrderBy(p => p.Lesson, StringComparer.Ordinal).ThenBy(p => p.Id)
+        app.MapGet("/api/problems", (DateOnly today) => problems.Values.OrderBy(p => p.Lesson, StringComparer.Ordinal).ThenBy(p => p.Order).ThenBy(p => p.Id)
             .Select(p => new { p.Id, p.Title, p.Lesson, Status = StatusOf(p, today), LoadReview(p)?.Due }));
 
         app.MapGet("/api/problems/{id:int}", (int id) => !problems.TryGetValue(id, out var p)

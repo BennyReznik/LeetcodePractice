@@ -16,6 +16,7 @@ button.run { background: #2f6f3a; border-color: #2f6f3a; color: #fff; }
 button.primary { background: #0e639c; border-color: #0e639c; color: #fff; }
 button:disabled { opacity: .5; cursor: default; }
 #timer.paused { opacity: .5; }
+button.next { display: block; margin: 6px 0; }
 :focus-visible { outline: 2px solid #3794ff; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .pair input { width: 100%; }

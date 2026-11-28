@@ -371,6 +371,16 @@ function showResult(result, submit) {
   });
 }
 
+// After a pass: the next problem in teaching order that hasn't been solved yet.
+function showNext(list) {
+  const here = list.findIndex(p => p.id === problem.id);
+  const next = [...list.slice(here + 1), ...list.slice(0, here)].find(p => p.status === 'new' || p.status === 'started');
+  if (!next) return;
+  const b = element('button', 'primary next', `Next problem: ${next.title} →`);
+  b.onclick = () => choose(next.id);
+  $('results').querySelector('.summary').after(b);
+}
+
 async function run(submit) {
   if (loading) return;
   stopDebug('');
@@ -390,7 +400,8 @@ async function run(submit) {
     if (!dirty) $('saved').textContent = 'Saved';
     problem.review = response.review;
     showResult(response.result, submit);
-    await loadList();
+    const list = await loadList();
+    if (submit && response.result.status === 'passed') showNext(list);
   } catch (e) {
     dirty = true;
     message(e.message);

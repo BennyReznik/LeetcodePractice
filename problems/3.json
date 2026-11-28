@@ -1,5 +1,5 @@
 {
-  "id": 3, "slug": "longest-substring-without-repeating", "title": "Longest Substring Without Repeating Characters", "lesson": "3. Sliding window",
+  "id": 3, "slug": "longest-substring-without-repeating", "title": "Longest Substring Without Repeating Characters", "lesson": "3. Sliding window", "order": 3,
   "description": "Return the length of the longest run of characters in s (a substring, so no gaps) where no character appears twice. s can contain letters, digits, symbols and spaces.\n\n\"abcabcbb\" → 3 (\"abc\")\n\"pwwkew\" → 3 (\"wke\")",
   "method": "LengthOfLongestSubstring", "compare": "exact",
   "starter": "public int LengthOfLongestSubstring(string s)\n{\n    \n}\n",

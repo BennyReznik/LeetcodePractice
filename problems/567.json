@@ -1,5 +1,5 @@
 {
-  "id": 567, "slug": "permutation-in-string", "title": "Permutation in String", "lesson": "3. Sliding window",
+  "id": 567, "slug": "permutation-in-string", "title": "Permutation in String", "lesson": "3. Sliding window", "order": 6,
   "description": "Both strings have only lowercase letters. Return true if s2 contains s1's letters in some order as a substring (all next to each other, no gaps).\n\ns1 = \"ab\", s2 = \"eidbaooo\" → true (\"ba\")\ns1 = \"ab\", s2 = \"eidboaoo\" → false",
   "method": "CheckInclusion", "compare": "exact",
   "starter": "public bool CheckInclusion(string s1, string s2)\n{\n    \n}\n",

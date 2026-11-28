@@ -1,5 +1,5 @@
 {
-  "id": 125, "slug": "valid-palindrome", "title": "Valid Palindrome", "lesson": "2. Two pointers",
+  "id": 125, "slug": "valid-palindrome", "title": "Valid Palindrome", "lesson": "2. Two pointers", "order": 1,
   "description": "Return true if s reads the same forwards and backwards, ignoring case and anything that is not a letter or digit.\n\n\"No lemon, no melon\" → true\n\"ab\" → false\n\" \" → true",
   "method": "IsPalindrome", "compare": "exact",
   "starter": "public bool IsPalindrome(string s)\n{\n    \n}\n",

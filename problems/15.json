@@ -1,5 +1,5 @@
 {
-  "id": 15, "slug": "three-sum", "title": "3Sum", "lesson": "2. Two pointers",
+  "id": 15, "slug": "three-sum", "title": "3Sum", "lesson": "2. Two pointers", "order": 4,
   "description": "Return every different set of three numbers that adds up to 0. Each position can be used once per set, and no set may appear twice. Any order is accepted.\n\n[-1, 0, 1, -1, 2] → [[-1, -1, 2], [-1, 0, 1]]",
   "method": "ThreeSum", "compare": "unordered-groups",
   "starter": "public IList<IList<int>> ThreeSum(int[] nums)\n{\n    \n}\n",

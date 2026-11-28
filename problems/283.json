@@ -1,5 +1,5 @@
 {
-  "id": 283, "slug": "move-zeroes", "title": "Move Zeroes", "lesson": "2. Two pointers",
+  "id": 283, "slug": "move-zeroes", "title": "Move Zeroes", "lesson": "2. Two pointers", "order": 3,
   "description": "Move every 0 to the end of the array, keeping the other numbers in the same order. Change the array itself and return nothing.\n\n[0, 1, 0, 3] becomes [1, 3, 0, 0]",
   "method": "MoveZeroes", "compare": "exact", "resultArg": 0,
   "starter": "public void MoveZeroes(int[] nums)\n{\n    \n}\n",

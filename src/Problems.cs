@@ -8,7 +8,7 @@ public record TestCase(string Name, JsonArray Args, JsonNode? Expected, bool Exa
 public record Problem(
     int Id, string Slug, string Title, string Lesson, string Description, string Method,
     string Starter, string TracePrompt, string Compare, List<TestCase> Tests, List<string>? Generated,
-    List<string> TraceColumns, int TraceRows, int? ResultArg)
+    List<string> TraceColumns, int TraceRows, int? ResultArg, int Order = 0) // Order: teaching order within the lesson
 {
     public string Key => $"{Id}-{Slug}";
 }

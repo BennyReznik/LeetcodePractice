@@ -1,5 +1,5 @@
 {
-  "id": 424, "slug": "longest-repeating-character-replacement", "title": "Longest Repeating Character Replacement", "lesson": "3. Sliding window",
+  "id": 424, "slug": "longest-repeating-character-replacement", "title": "Longest Repeating Character Replacement", "lesson": "3. Sliding window", "order": 5,
   "description": "s has only uppercase letters A to Z. You may change at most k characters into any other letter. Return the length of the longest run of one repeated letter you can make.\n\ns = \"AABABBA\", k = 1 → 4 (change the middle A to B: \"AABBBBA\")",
   "method": "CharacterReplacement", "compare": "exact",
   "starter": "public int CharacterReplacement(string s, int k)\n{\n    \n}\n",

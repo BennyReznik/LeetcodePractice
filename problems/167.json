@@ -1,5 +1,5 @@
 {
-  "id": 167, "slug": "two-sum-ii", "title": "Two Sum II (sorted input)", "lesson": "2. Two pointers",
+  "id": 167, "slug": "two-sum-ii", "title": "Two Sum II (sorted input)", "lesson": "2. Two pointers", "order": 2,
   "description": "The array is sorted. Return the positions of the two numbers that add up to target, counting from 1, smaller position first. Exactly one solution exists. Use O(1) extra space.\n\nnumbers = [2, 3, 5, 8], target = 8 → [2, 3]",
   "method": "TwoSum", "compare": "exact",
   "starter": "public int[] TwoSum(int[] numbers, int target)\n{\n    \n}\n",

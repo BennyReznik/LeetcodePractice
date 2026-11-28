@@ -1,5 +1,5 @@
 {
-  "id": 1, "slug": "two-sum", "title": "Two Sum", "lesson": "1. Arrays, strings and hashing",
+  "id": 1, "slug": "two-sum", "title": "Two Sum", "lesson": "1. Arrays, strings and hashing", "order": 1,
   "description": "Return the indices of two different elements that add up to target. Exactly one solution exists. Either index order is accepted.\n\nnums = [3, 8, 5, 2], target = 10 → [1, 3]",
   "method": "TwoSum", "compare": "unordered",
   "starter": "public int[] TwoSum(int[] nums, int target)\n{\n    \n}\n",
