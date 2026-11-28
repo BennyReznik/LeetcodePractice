@@ -60,6 +60,14 @@ function save() {
   });
 }
 
+let paused = false;
+function setPaused(on) {
+  paused = on;
+  $('pause').textContent = on ? 'Resume' : 'Pause';
+  $('pause').setAttribute('aria-pressed', String(on));
+  $('timer').classList.toggle('paused', on);
+}
+
 function showTimer() {
   $('timer').textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
@@ -175,6 +183,7 @@ async function load(id) {
     problem = next;
     revision = problem.work.revision;
     seconds = problem.work.seconds;
+    setPaused(false);
     $('problem').value = id;
     $('description').textContent = problem.description;
     $('traceLabel').textContent = `${problem.tracePrompt} (at least ${problem.traceRows} rows)`;
@@ -454,6 +463,7 @@ require(['vs/editor/editor.main'], async () => {
   $('addRow').onclick = () => { addRow(); $('rows').tBodies[0].lastElementChild.querySelector('input').focus(); };
   $('addCustom').onclick = () => { addCustom(); $('customs').lastElementChild.querySelector('textarea').focus(); };
   $('restart').onclick = () => { seconds = 0; showTimer(); changed(); };
+  $('pause').onclick = () => { setPaused(!paused); if (paused) changed(); }; // saves the time when pausing
   $('suggest').checked = localStorage.getItem('suggest') !== 'off';
   const applySuggest = () => {
     const on = $('suggest').checked;
@@ -473,7 +483,7 @@ require(['vs/editor/editor.main'], async () => {
     }
   };
   $('problem').onchange = e => choose(e.target.value);
-  setInterval(() => { if (!loading && !document.hidden) { seconds++; showTimer(); } }, 1000);
+  setInterval(() => { if (!loading && !paused && !document.hidden) { seconds++; showTimer(); } }, 1000);
   addEventListener('focus', () => { if (!loading) loadList().catch(() => {}); }); // picks up reviews that became due
   addEventListener('beforeunload', e => { if (dirty) { save().catch(() => {}); e.preventDefault(); } });
 
