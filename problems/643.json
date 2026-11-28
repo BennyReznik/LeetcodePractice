@@ -1,0 +1,17 @@
+{
+  "id": 643, "slug": "maximum-average-subarray", "title": "Maximum Average Subarray I", "lesson": "3. Sliding window",
+  "description": "Find the k numbers in a row with the largest average, and return that average. Answers within 0.00001 are accepted.\n\nnums = [1, 12, -5, -6, 50, 3], k = 4 → 12.75 (12 - 5 - 6 + 50 = 51, and 51 / 4 = 12.75)",
+  "method": "FindMaxAverage", "compare": "close",
+  "starter": "public double FindMaxAverage(int[] nums, int k)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [1, 12, -5, -6, 50, 3], k = 4: one row per full window",
+  "traceColumns": ["right", "added", "removed", "window sum", "best sum"], "traceRows": 3,
+  "tests": [
+    { "name": "Example", "args": [[1, 12, -5, -6, 50, 3], 4], "expected": 12.75, "example": true },
+    { "name": "One number", "args": [[5], 1], "expected": 5.0, "example": true },
+    { "name": "Window is the whole array", "args": [[3, 1, 2], 3], "expected": 2.0 },
+    { "name": "All negative", "args": [[-3, -1, -2, -8], 2], "expected": -1.5 },
+    { "name": "Best window at the start", "args": [[9, 9, 1, 1, 1], 2], "expected": 9.0 },
+    { "name": "Best window at the end", "args": [[1, 1, 1, 9, 9], 2], "expected": 9.0 }
+  ],
+  "generated": ["average-large"]
+}

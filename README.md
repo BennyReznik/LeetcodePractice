@@ -35,7 +35,7 @@ The first build downloads the .NET and Node images. After that the app works off
 
 ## Add a problem
 
-1. Add `problems/{id}.json`, copying an existing one. `compare` is `exact`, `unordered` or `unordered-groups`.
+1. Add `problems/{id}.json`, copying an existing one. `compare` is `exact`, `unordered`, `unordered-groups`, or `close` (numbers within 0.00001, for averages).
    For problems that change an argument in place, set `resultArg` to its position.
 2. For a large input, add a generator in `src/Problems.cs` and list it under `generated`.
 3. Add `verify/{id}.reference.passed.cs`, and bad solutions named for the status they should get.

@@ -51,6 +51,13 @@ public static class Generators
         "three-sum-large" => ThreeSum(3_000),
         "three-sum-zeroes" => Case("Many zeroes", new[] { new[] { 0, 0, 0 } }, new int[3_000]),
         "container-large" => Container(200_000),
+        "average-large" => Average(200_000, 50_000),
+        "stock-large" => Stock(200_000),
+        "substring-large" => Case("Large input: checking every substring is too slow",
+            95, new string(Enumerable.Range(0, 200_000).Select(i => (char)(' ' + i % 95)).ToArray())),
+        "min-subarray-large" => Case("Large input: restarting from each start is too slow", 100_000, 100_000, Enumerable.Repeat(1, 200_000).ToArray()),
+        "replacement-large" => Replacement(200_000, 1_000),
+        "permutation-large" => Permutation(10_000, 190_000),
         _ => throw new InvalidDataException($"Unknown generator '{name}'")
     };
 
@@ -104,6 +111,48 @@ public static class Generators
         var heights = Enumerable.Repeat(1, n).ToArray();
         heights[1] = heights[n - 2] = 10_000;
         return Case("Large input: O(n²) is too slow", (n - 3) * 10_000, heights);
+    }
+
+    static TestCase Average(int n, int k)
+    {
+        var random = new Random(42);
+        var nums = Enumerable.Range(0, n).Select(_ => random.Next(-10_000, 10_001)).ToArray();
+        long sum = nums.Take(k).Sum(x => (long)x), best = sum;
+        for (int i = k; i < n; i++) best = Math.Max(best, sum += nums[i] - nums[i - k]);
+        return Case("Large input: adding up every window is too slow", (double)best / k, nums, k);
+    }
+
+    static TestCase Stock(int n)
+    {
+        var random = new Random(7);
+        var prices = Enumerable.Range(0, n).Select(_ => random.Next(0, 10_001)).ToArray();
+        int low = int.MaxValue, best = 0;
+        foreach (var p in prices) { low = Math.Min(low, p); best = Math.Max(best, p - low); }
+        return Case("Large input: trying every pair of days is too slow", best, prices);
+    }
+
+    // Mostly 'A' with a 'B' every 100 characters, so the best window is long.
+    static TestCase Replacement(int n, int k)
+    {
+        var s = new string(Enumerable.Range(0, n).Select(i => i % 100 == 99 ? 'B' : 'A').ToArray());
+        int left = 0, most = 0, best = 0;
+        var count = new int[26];
+        for (int right = 0; right < n; right++)
+        {
+            most = Math.Max(most, ++count[s[right] - 'A']);
+            while (right - left + 1 - most > k) count[s[left++] - 'A']--;
+            best = Math.Max(best, right - left + 1);
+        }
+        return Case("Large input: growing a window from every start is too slow", best, s, k);
+    }
+
+    // s2 is all 'z' until a shuffled copy of s1 at the very end.
+    static TestCase Permutation(int m, int filler)
+    {
+        var s1 = Enumerable.Range(0, m).Select(i => (char)('a' + i % 25)).ToArray();
+        var copy = (char[])s1.Clone();
+        new Random(42).Shuffle(copy);
+        return Case("Large input: sorting every window is too slow", true, new string(s1), new string('z', filler) + new string(copy));
     }
 
     static TestCase Anagram(int n)

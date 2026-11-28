@@ -1,0 +1,18 @@
+{
+  "id": 567, "slug": "permutation-in-string", "title": "Permutation in String", "lesson": "3. Sliding window",
+  "description": "Both strings have only lowercase letters. Return true if s2 contains s1's letters in some order as a substring (all next to each other, no gaps).\n\ns1 = \"ab\", s2 = \"eidbaooo\" → true (\"ba\")\ns1 = \"ab\", s2 = \"eidboaoo\" → false",
+  "method": "CheckInclusion", "compare": "exact",
+  "starter": "public bool CheckInclusion(string s1, string s2)\n{\n    \n}\n",
+  "tracePrompt": "Trace of \"ab\", \"eidbaooo\": one row per window of length 2, until it returns",
+  "traceColumns": ["start", "window", "counts match?"], "traceRows": 4,
+  "tests": [
+    { "name": "Example", "args": ["ab", "eidbaooo"], "expected": true, "example": true },
+    { "name": "Letters there, but not next to each other", "args": ["ab", "eidboaoo"], "expected": false, "example": true },
+    { "name": "s1 longer than s2", "args": ["abc", "ab"], "expected": false },
+    { "name": "Same string", "args": ["adc", "dcda"], "expected": true },
+    { "name": "Repeated letters must match in number", "args": ["aab", "abbab"], "expected": false },
+    { "name": "Match at the very start", "args": ["ba", "abcd"], "expected": true },
+    { "name": "Match at the very end", "args": ["dc", "abcd"], "expected": true }
+  ],
+  "generated": ["permutation-large"]
+}

@@ -1,0 +1,17 @@
+{
+  "id": 424, "slug": "longest-repeating-character-replacement", "title": "Longest Repeating Character Replacement", "lesson": "3. Sliding window",
+  "description": "s has only uppercase letters A to Z. You may change at most k characters into any other letter. Return the length of the longest run of one repeated letter you can make.\n\ns = \"AABABBA\", k = 1 → 4 (change the middle A to B: \"AABBBBA\")",
+  "method": "CharacterReplacement", "compare": "exact",
+  "starter": "public int CharacterReplacement(string s, int k)\n{\n    \n}\n",
+  "tracePrompt": "Trace of \"AABABBA\", k = 1: one row per character that comes into the window",
+  "traceColumns": ["right", "char", "most common count", "left after", "best"], "traceRows": 7,
+  "tests": [
+    { "name": "Example", "args": ["AABABBA", 1], "expected": 4, "example": true },
+    { "name": "Change two", "args": ["ABAB", 2], "expected": 4, "example": true },
+    { "name": "No changes allowed", "args": ["AABBBA", 0], "expected": 3 },
+    { "name": "One letter", "args": ["A", 0], "expected": 1 },
+    { "name": "k larger than the string", "args": ["ABC", 5], "expected": 3 },
+    { "name": "Best letter changes along the way", "args": ["AAABBBBBCA", 2], "expected": 7 }
+  ],
+  "generated": ["replacement-large"]
+}

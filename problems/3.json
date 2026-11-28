@@ -1,0 +1,19 @@
+{
+  "id": 3, "slug": "longest-substring-without-repeating", "title": "Longest Substring Without Repeating Characters", "lesson": "3. Sliding window",
+  "description": "Return the length of the longest run of characters in s (a substring, so no gaps) where no character appears twice. s can contain letters, digits, symbols and spaces.\n\n\"abcabcbb\" → 3 (\"abc\")\n\"pwwkew\" → 3 (\"wke\")",
+  "method": "LengthOfLongestSubstring", "compare": "exact",
+  "starter": "public int LengthOfLongestSubstring(string s)\n{\n    \n}\n",
+  "tracePrompt": "Trace of \"abba\": one row per character that comes into the window",
+  "traceColumns": ["right", "char", "left after", "window", "best"], "traceRows": 4,
+  "tests": [
+    { "name": "Example", "args": ["abcabcbb"], "expected": 3, "example": true },
+    { "name": "The answer is in the middle", "args": ["pwwkew"], "expected": 3, "example": true },
+    { "name": "One letter repeated", "args": ["bbbbb"], "expected": 1 },
+    { "name": "Empty string", "args": [""], "expected": 0 },
+    { "name": "A space", "args": [" "], "expected": 1 },
+    { "name": "Left must not move back", "args": ["abba"], "expected": 2 },
+    { "name": "Repeat inside the window", "args": ["dvdf"], "expected": 3 },
+    { "name": "Digits and symbols", "args": ["a1!a2@"], "expected": 5 }
+  ],
+  "generated": ["substring-large"]
+}

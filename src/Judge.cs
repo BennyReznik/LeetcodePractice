@@ -174,8 +174,15 @@ public static class Comparer
     {
         "unordered" => JsonNode.DeepEquals(Sorted(expected), Sorted(actual)),
         "unordered-groups" => JsonNode.DeepEquals(SortedGroups(expected), SortedGroups(actual)),
+        "close" => Close(expected, actual),
         _ => JsonNode.DeepEquals(expected, actual)
     };
+
+    // For answers like averages, where the last digits depend on the order of the additions.
+    static bool Close(JsonNode? expected, JsonNode? actual) =>
+        expected is JsonValue e && actual is JsonValue a && e.TryGetValue(out double x) && a.TryGetValue(out double y)
+            ? Math.Abs(x - y) <= 1e-5 * Math.Max(1, Math.Abs(x))
+            : JsonNode.DeepEquals(expected, actual);
 
     static JsonNode? Sorted(JsonNode? node) => node is JsonArray a
         ? new JsonArray(a.OrderBy(x => x?.ToJsonString(), StringComparer.Ordinal).Select(x => x?.DeepClone()).ToArray())

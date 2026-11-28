@@ -1,0 +1,17 @@
+{
+  "id": 209, "slug": "minimum-size-subarray-sum", "title": "Minimum Size Subarray Sum", "lesson": "3. Sliding window",
+  "description": "All numbers are positive. Return the length of the shortest run of numbers in a row whose sum is at least target, or 0 if there is none.\n\ntarget = 7, nums = [2, 3, 1, 2, 4, 3] → 2 ([4, 3])",
+  "method": "MinSubArrayLen", "compare": "exact",
+  "starter": "public int MinSubArrayLen(int target, int[] nums)\n{\n    \n}\n",
+  "tracePrompt": "Trace of target = 7, [2, 3, 1, 2, 4, 3]: one row per number added",
+  "traceColumns": ["right", "sum after adding", "how far left moves", "sum after shrinking", "shortest"], "traceRows": 6,
+  "tests": [
+    { "name": "Example", "args": [7, [2, 3, 1, 2, 4, 3]], "expected": 2, "example": true },
+    { "name": "No answer", "args": [11, [1, 1, 1, 1]], "expected": 0, "example": true },
+    { "name": "One number is enough", "args": [4, [1, 4, 4]], "expected": 1 },
+    { "name": "Needs the whole array", "args": [10, [1, 2, 3, 4]], "expected": 4 },
+    { "name": "Shrink more than once", "args": [11, [1, 1, 1, 1, 10, 1]], "expected": 2 },
+    { "name": "Exactly the target", "args": [6, [6]], "expected": 1 }
+  ],
+  "generated": ["min-subarray-large"]
+}

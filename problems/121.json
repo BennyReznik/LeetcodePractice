@@ -1,0 +1,17 @@
+{
+  "id": 121, "slug": "best-time-to-buy-and-sell-stock", "title": "Best Time to Buy and Sell Stock", "lesson": "3. Sliding window",
+  "description": "prices[i] is a stock's price on day i. Buy on one day and sell on a later day. Return the largest profit, or 0 if no trade makes money.\n\n[7, 1, 5, 3, 6, 4] → 5 (buy at 1, sell at 6)\n[7, 6, 4, 3, 1] → 0",
+  "method": "MaxProfit", "compare": "exact",
+  "starter": "public int MaxProfit(int[] prices)\n{\n    \n}\n",
+  "tracePrompt": "Trace of [7, 1, 5, 3, 6, 4]: one row per day",
+  "traceColumns": ["day", "price", "lowest so far", "profit if sold today", "best"], "traceRows": 6,
+  "tests": [
+    { "name": "Example", "args": [[7, 1, 5, 3, 6, 4]], "expected": 5, "example": true },
+    { "name": "Prices only fall", "args": [[7, 6, 4, 3, 1]], "expected": 0, "example": true },
+    { "name": "One day", "args": [[5]], "expected": 0 },
+    { "name": "Lowest price comes after the highest", "args": [[3, 8, 1, 4]], "expected": 5 },
+    { "name": "New low, then a bigger gain", "args": [[4, 6, 1, 8]], "expected": 7 },
+    { "name": "Same price every day", "args": [[2, 2, 2]], "expected": 0 }
+  ],
+  "generated": ["stock-large"]
+}
